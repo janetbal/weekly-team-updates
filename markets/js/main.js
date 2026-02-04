@@ -116,12 +116,17 @@ const WeeklyUpdates = {
       const dependentProjects = await this.fetchDependentProjects();
       console.log('Dependent projects fetched:', dependentProjects);
 
-      // Step 4: Generate AI analysis for urgent items
+      // Step 4: Summarize project updates with AI
+      this.showLoadingMessage('Summarizing project updates...');
+      const summarizedProjects = await this.summarizeProjectUpdates(projects);
+      console.log('Project summaries generated:', summarizedProjects);
+
+      // Step 5: Generate AI analysis for urgent items
       this.showLoadingMessage('Generating urgent items analysis...');
-      const urgentItems = await this.generateUrgentItems(metrics, projects, dependentProjects);
+      const urgentItems = await this.generateUrgentItems(metrics, summarizedProjects, dependentProjects);
       console.log('Urgent items generated:', urgentItems);
 
-      // Step 5: Assemble the report
+      // Step 6: Assemble the report
       const weekKey = this.getCurrentWeekKey();
       const now = new Date();
       const report = {
@@ -131,16 +136,16 @@ const WeeklyUpdates = {
         generatedBy: await this.getCurrentUser(),
         migrationMetrics: metrics,
         urgentItems: urgentItems,
-        projects: projects,
+        projects: summarizedProjects,
         dependentProjects: dependentProjects,
         keyDates: this.config.keyDates || []
       };
 
-      // Step 6: Save to quick.db
+      // Step 7: Save to quick.db
       this.showLoadingMessage('Saving report...');
       await this.saveData(report);
 
-      // Step 7: Update UI
+      // Step 8: Update UI
       this.currentWeek = report;
       this.activeWeekKey = weekKey;
       this.render();
@@ -214,80 +219,124 @@ const WeeklyUpdates = {
   },
 
   /**
-   * Fetch project data from Vault via quick.ai + MCP
-   * Dynamically fetches all active projects for configured team IDs
+   * Fetch project data from Vault via BigQuery
+   * Falls back to static config if BigQuery is unavailable
    */
   async fetchVaultProjects() {
-    if (typeof quick === 'undefined' || !quick.ai) {
-      console.warn('quick.ai not available, using placeholder projects');
+    if (typeof quick === 'undefined' || !quick.dw) {
+      console.warn('quick.dw not available, using static project data');
       return this.getPlaceholderProjects();
     }
 
-    const teamIds = this.config.vaultTeamIds || [];
-    if (teamIds.length === 0) {
-      console.warn('No vaultTeamIds configured');
-      return [];
+    const projectIds = this.config.projectIds || [];
+    const queryTemplate = this.config.queries?.vaultProjects;
+
+    if (!queryTemplate || projectIds.length === 0) {
+      console.log('No vaultProjects query or projectIds configured');
+      return this.getPlaceholderProjects();
     }
 
-    const projects = [];
+    try {
+      // Build the query with project IDs
+      const projectIdsList = projectIds.map(id => `'${id}'`).join(', ');
+      const query = queryTemplate.replace('{PROJECT_IDS}', projectIdsList);
 
-    // Step 1: Fetch all active projects from team IDs
-    for (const teamId of teamIds) {
-      try {
-        const response = await quick.ai.ask(
-          `Use the vault_get_projects tool with team_id="${teamId}" to get all active projects for this team.
+      const result = await quick.dw.query(query);
+      const rows = result?.rows || [];
 
-Return ONLY a JSON array of projects with these fields (no markdown, no explanation):
-[
-  {
-    "id": "project vault ID",
-    "name": "project name",
-    "state": "current phase (Discovery/Prototype/Build/Release/Done)",
-    "champion": "champion name",
-    "targetEndDate": "target date or null",
-    "dateHealth": "on-track/at-risk/off-track",
-    "risk": "Low/Medium/High based on blockers and timeline"
-  }
-]`,
-          { tools: ['vault-mcp'] }
-        );
-
-        // Parse the response - look for array
-        const jsonMatch = response.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-          const teamProjects = JSON.parse(jsonMatch[0]);
-          projects.push(...teamProjects);
-        }
-      } catch (error) {
-        console.error(`Failed to fetch projects for team ${teamId}:`, error);
+      if (rows.length === 0) {
+        console.log('No projects returned from BigQuery');
+        return this.getPlaceholderProjects();
       }
+
+      // Transform BigQuery results to our format
+      const projects = rows.map(row => ({
+        vaultId: row.project_id,
+        name: row.name || 'Unknown Project',
+        state: row.state || '--',
+        champion: row.champion || '--',
+        targetEndDate: row.target_end_date || '--',
+        dateHealth: this.normalizeHealthStatus(row.date_health),
+        thisWeek: row.recent_updates || row.project_summary || 'No updates available.',
+        risk: this.calculateRisk(row),
+        priority: row.priority?.toLowerCase() || 'p1'
+      }));
+
+      console.log('Fetched projects from BigQuery:', projects.length);
+      return projects;
+
+    } catch (error) {
+      console.error('Failed to fetch from BigQuery:', error);
+      return this.getPlaceholderProjects();
+    }
+  },
+
+  /**
+   * Summarize project updates using AI
+   * Takes raw recent posts and creates concise summaries for each project
+   */
+  async summarizeProjectUpdates(projects) {
+    if (typeof quick === 'undefined' || !quick.ai) {
+      console.warn('quick.ai not available, using raw updates');
+      return projects;
     }
 
-    // Step 2: Fetch detailed updates for each project
+    const summarizedProjects = [];
+
     for (const project of projects) {
+      // If no substantial updates, keep as-is
+      if (!project.thisWeek || project.thisWeek === 'No updates available.' || project.thisWeek.length < 50) {
+        summarizedProjects.push(project);
+        continue;
+      }
+
       try {
-        const detailResponse = await quick.ai.ask(
-          `Use the vault_get_project tool to fetch project #${project.id} with include_activity=true.
+        const prompt = `Summarize these recent project updates into 2-3 concise sentences for a weekly team status report. Focus on what was accomplished and any blockers or risks.
 
-Return ONLY a JSON object with this field (no markdown, no explanation):
-{
-  "thisWeek": "2-3 sentence summary of recent updates from the last 14 days"
-}`,
-          { tools: ['vault-mcp'] }
-        );
+Project: ${project.name}
+Raw updates: ${project.thisWeek}
 
-        const detailMatch = detailResponse.match(/\{[\s\S]*\}/);
-        if (detailMatch) {
-          const details = JSON.parse(detailMatch[0]);
-          project.thisWeek = details.thisWeek || 'No recent updates';
-        }
+Return ONLY the summary text, no formatting or labels.`;
+
+        const summary = await quick.ai.ask(prompt, {
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 200
+        });
+
+        summarizedProjects.push({
+          ...project,
+          thisWeek: summary.trim() || project.thisWeek
+        });
       } catch (error) {
-        console.error(`Failed to fetch details for project ${project.id}:`, error);
-        project.thisWeek = 'Failed to fetch updates';
+        console.error(`Failed to summarize updates for ${project.name}:`, error);
+        summarizedProjects.push(project);
       }
     }
 
-    return projects;
+    return summarizedProjects;
+  },
+
+  /**
+   * Normalize health status from Vault format
+   */
+  normalizeHealthStatus(status) {
+    if (!status) return 'on-track';
+    const normalized = status.toLowerCase().replace(/\s+/g, '-');
+    if (normalized.includes('off')) return 'off-track';
+    if (normalized.includes('risk')) return 'at-risk';
+    return 'on-track';
+  },
+
+  /**
+   * Calculate risk level from project data
+   */
+  calculateRisk(row) {
+    if (row.is_off_track_active_project) return 'High';
+    if (row.is_past_due_date) return 'High';
+    const health = (row.date_health || '').toLowerCase();
+    if (health.includes('off')) return 'High';
+    if (health.includes('risk')) return 'Medium';
+    return 'Low';
   },
 
   /**
@@ -421,18 +470,19 @@ ${(this.config.keyDates || []).slice(0, 5).map(d => `- ${d.date}: ${d.event}`).j
   },
 
   /**
-   * Get placeholder projects when Vault is unavailable
+   * Get placeholder projects using static config data
    */
   getPlaceholderProjects() {
-    return [{
-      name: 'Projects unavailable',
-      state: '--',
-      champion: '--',
-      targetEndDate: '--',
-      dateHealth: 'on-track',
-      thisWeek: 'Vault data unavailable. Run generation Monday-Wednesday.',
-      risk: 'Medium'
-    }];
+    return (this.config.projects || []).map(p => ({
+      name: p.name,
+      state: p.state || '--',
+      champion: p.champion,
+      targetEndDate: p.targetEndDate || '--',
+      dateHealth: p.dateHealth || 'on-track',
+      thisWeek: 'Generate report to see weekly updates.',
+      risk: p.risk || 'Low',
+      vaultId: p.vaultId
+    }));
   },
 
   /**
@@ -450,11 +500,12 @@ ${(this.config.keyDates || []).slice(0, 5).map(d => `- ${d.date}: ${d.event}`).j
   },
 
   /**
-   * Load data from quick.db
+   * Load data from quick.db or static JSON file
    */
   async loadData() {
     try {
-      if (typeof quick !== 'undefined' && quick.db) {
+      // Try quick.db first (only works on quick.shopify.io)
+      if (typeof quick !== 'undefined' && quick.db && typeof quick.db.get === 'function') {
         // Load current week
         const currentWeekKey = this.getCurrentWeekKey();
         this.currentWeek = await quick.db.get(`${this.config.dbKey}:${currentWeekKey}`);
@@ -478,15 +529,39 @@ ${(this.config.keyDates || []).slice(0, 5).map(d => `- ${d.date}: ${d.event}`).j
         this.activeWeekKey = this.currentWeek?.weekKey || this.getCurrentWeekKey();
       }
 
-      // Fall back to placeholder if no data available
+      // Fall back to static JSON file if quick.db not available or no data
       if (!this.currentWeek) {
-        console.log('No data in quick.db, using placeholder');
+        console.log('quick.db not available, trying static JSON file');
+        this.currentWeek = await this.loadStaticData();
+      }
+
+      // Fall back to placeholder if still no data
+      if (!this.currentWeek) {
+        console.log('No data available, using placeholder');
         this.currentWeek = this.getPlaceholderData();
       }
     } catch (error) {
       console.error('Failed to load data:', error);
-      this.currentWeek = this.getPlaceholderData();
+      this.currentWeek = await this.loadStaticData() || this.getPlaceholderData();
     }
+  },
+
+  /**
+   * Load data from static JSON file (for local development)
+   */
+  async loadStaticData() {
+    try {
+      const currentWeekKey = this.getCurrentWeekKey();
+      const response = await fetch(`week-${currentWeekKey}.json`);
+      if (response.ok) {
+        const data = await response.json();
+        this.activeWeekKey = data.weekKey || currentWeekKey;
+        return data;
+      }
+    } catch (e) {
+      console.log('No static JSON file found');
+    }
+    return null;
   },
 
   /**
@@ -898,6 +973,7 @@ ${(this.config.keyDates || []).slice(0, 5).map(d => `- ${d.date}: ${d.event}`).j
       'Prototype': 'prototype',
       'Build': 'build',
       'Release': 'release',
+      'Observe': 'release',  // Observe uses same styling as Release
       'Done': 'complete',
       '--': 'discovery'
     };
