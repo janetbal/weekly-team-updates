@@ -1,0 +1,32 @@
+name: Deploy to Quick
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-markets:
+    runs-on: shopify-ubuntu-latest
+    name: Deploy Markets Weekly Updates
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shopify-playground/deploy-to-quick@main
+        with:
+          dir: markets
+          site_name: "markets-weekly-updates"
+
+  deploy-channels:
+    runs-on: shopify-ubuntu-latest
+    name: Deploy Channels Weekly Updates
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shopify-playground/deploy-to-quick@main
+        with:
+          dir: channels
+          site_name: "channels-weekly-updates"

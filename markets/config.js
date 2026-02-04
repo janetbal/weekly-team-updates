@@ -9,33 +9,9 @@ const CONFIG = {
   siteKey: "markets-weekly-updates",
   slackChannel: "#markets-migration",
 
-  // Vault projects owned by this team
-  projects: [
-    {
-      vaultId: "46500",
-      name: "Sub-country Markets",
-      champion: "Cole Atkinson",
-      description: "Province/state-level market segmentation"
-    },
-    {
-      vaultId: "48197",
-      name: "Catalog Changesets",
-      champion: "Courtney Goodin",
-      description: "Track catalog changes for market-specific pricing"
-    },
-    {
-      vaultId: "48334",
-      name: "Translations for Themes",
-      champion: "Cole Atkinson",
-      description: "Theme content localization via Markets"
-    },
-    {
-      vaultId: "48958",
-      name: "Yugabyte Migration",
-      champion: "Prathul Prabhakar",
-      description: "Database migration to Yugabyte"
-    }
-  ],
+  // Vault team IDs to fetch projects from dynamically
+  // Markets team
+  vaultTeamIds: ["16582"],
 
   // External projects that depend on Markets team
   dependentProjects: [

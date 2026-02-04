@@ -46,11 +46,11 @@ const WeeklyUpdates = {
   },
 
   /**
-   * Check if today is Monday or Tuesday (generation allowed)
+   * Check if today is Monday, Tuesday, or Wednesday (generation allowed)
    */
   canGenerateToday() {
     const day = new Date().getDay();
-    return day === 1 || day === 2; // Mon=1, Tue=2
+    return day === 1 || day === 2 || day === 3; // Mon=1, Tue=2, Wed=3
   },
 
   /**
@@ -78,7 +78,7 @@ const WeeklyUpdates = {
    */
   async generate() {
     if (!this.canGenerateToday()) {
-      alert('Report generation is only available on Monday and Tuesday');
+      alert('Report generation is only available Monday through Wednesday');
       return;
     }
 
@@ -215,6 +215,7 @@ const WeeklyUpdates = {
 
   /**
    * Fetch project data from Vault via quick.ai + MCP
+   * Dynamically fetches all active projects for configured team IDs
    */
   async fetchVaultProjects() {
     if (typeof quick === 'undefined' || !quick.ai) {
@@ -222,49 +223,67 @@ const WeeklyUpdates = {
       return this.getPlaceholderProjects();
     }
 
-    const projects = [];
-    const projectConfigs = this.config.projects || [];
+    const teamIds = this.config.vaultTeamIds || [];
+    if (teamIds.length === 0) {
+      console.warn('No vaultTeamIds configured');
+      return [];
+    }
 
-    for (const projectConfig of projectConfigs) {
+    const projects = [];
+
+    // Step 1: Fetch all active projects from team IDs
+    for (const teamId of teamIds) {
       try {
         const response = await quick.ai.ask(
-          `Use the vault_get_project tool to fetch project #${projectConfig.vaultId}.
+          `Use the vault_get_projects tool with team_id="${teamId}" to get all active projects for this team.
 
-Return ONLY a JSON object with these fields (no markdown, no explanation):
+Return ONLY a JSON array of projects with these fields (no markdown, no explanation):
+[
+  {
+    "id": "project vault ID",
+    "name": "project name",
+    "state": "current phase (Discovery/Prototype/Build/Release/Done)",
+    "champion": "champion name",
+    "targetEndDate": "target date or null",
+    "dateHealth": "on-track/at-risk/off-track",
+    "risk": "Low/Medium/High based on blockers and timeline"
+  }
+]`,
+          { tools: ['vault-mcp'] }
+        );
+
+        // Parse the response - look for array
+        const jsonMatch = response.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          const teamProjects = JSON.parse(jsonMatch[0]);
+          projects.push(...teamProjects);
+        }
+      } catch (error) {
+        console.error(`Failed to fetch projects for team ${teamId}:`, error);
+      }
+    }
+
+    // Step 2: Fetch detailed updates for each project
+    for (const project of projects) {
+      try {
+        const detailResponse = await quick.ai.ask(
+          `Use the vault_get_project tool to fetch project #${project.id} with include_activity=true.
+
+Return ONLY a JSON object with this field (no markdown, no explanation):
 {
-  "name": "project name",
-  "state": "current phase (Discovery/Prototype/Build/Release/Done)",
-  "champion": "champion name",
-  "targetEndDate": "target date or null",
-  "dateHealth": "on-track/at-risk/off-track",
-  "thisWeek": "summary of recent updates from the last 14 days",
-  "risk": "Low/Medium/High based on blockers and timeline"
+  "thisWeek": "2-3 sentence summary of recent updates from the last 14 days"
 }`,
           { tools: ['vault-mcp'] }
         );
 
-        // Parse the response
-        const jsonMatch = response.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const projectData = JSON.parse(jsonMatch[0]);
-          projects.push({
-            ...projectData,
-            vaultId: projectConfig.vaultId
-          });
+        const detailMatch = detailResponse.match(/\{[\s\S]*\}/);
+        if (detailMatch) {
+          const details = JSON.parse(detailMatch[0]);
+          project.thisWeek = details.thisWeek || 'No recent updates';
         }
       } catch (error) {
-        console.error(`Failed to fetch project ${projectConfig.vaultId}:`, error);
-        // Add placeholder for failed fetch
-        projects.push({
-          name: projectConfig.name,
-          state: '--',
-          champion: projectConfig.champion,
-          targetEndDate: '--',
-          dateHealth: 'on-track',
-          thisWeek: 'Failed to fetch from Vault',
-          risk: 'Medium',
-          vaultId: projectConfig.vaultId
-        });
+        console.error(`Failed to fetch details for project ${project.id}:`, error);
+        project.thisWeek = 'Failed to fetch updates';
       }
     }
 
@@ -405,16 +424,15 @@ ${(this.config.keyDates || []).slice(0, 5).map(d => `- ${d.date}: ${d.event}`).j
    * Get placeholder projects when Vault is unavailable
    */
   getPlaceholderProjects() {
-    return (this.config.projects || []).map(p => ({
-      name: p.name,
+    return [{
+      name: 'Projects unavailable',
       state: '--',
-      champion: p.champion,
+      champion: '--',
       targetEndDate: '--',
       dateHealth: 'on-track',
-      thisWeek: 'Vault data unavailable. Run generation on Monday/Tuesday.',
-      risk: 'Medium',
-      vaultId: p.vaultId
-    }));
+      thisWeek: 'Vault data unavailable. Run generation Monday-Wednesday.',
+      risk: 'Medium'
+    }];
   },
 
   /**
@@ -736,7 +754,7 @@ ${(this.config.keyDates || []).slice(0, 5).map(d => `- ${d.date}: ${d.event}`).j
           <p class="text-slate-400">
             ${canGenerate
               ? 'No urgent items yet. Click "Generate This Week\'s Report" to create.'
-              : 'No urgent items. Generation available Monday-Tuesday.'}
+              : 'No urgent items. Generation available Monday-Wednesday.'}
           </p>
         </div>
       `;

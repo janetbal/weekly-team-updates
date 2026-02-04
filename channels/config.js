@@ -9,27 +9,9 @@ const CONFIG = {
   siteKey: "channels-weekly-updates",
   slackChannel: "#channels-platform-team",
 
-  // Vault projects owned by this team
-  projects: [
-    {
-      vaultId: "47702",
-      name: "Agentic v2 & v2.1",
-      champion: "Janet Balneaves",
-      description: "Agentic commerce storefronts enrollment and catalog access"
-    },
-    {
-      vaultId: "46227",
-      name: "Channel Markets",
-      champion: "Janet Balneaves",
-      description: "Market-specific catalog and pricing for sales channels"
-    },
-    {
-      vaultId: "47893",
-      name: "Multi-channel Apps",
-      champion: "TBD",
-      description: "Apps that operate across multiple sales channels"
-    }
-  ],
+  // Vault team IDs to fetch projects from dynamically
+  // Channels team (15256) + child teams: Agentic (15257), Channel Markets (16610), Multi-channel Apps (16943)
+  vaultTeamIds: ["15256", "15257", "16610", "16943"],
 
   // External projects that depend on Channels team
   dependentProjects: [
@@ -76,8 +58,6 @@ const CONFIG = {
   // Key dates to display (static, update as needed)
   keyDates: [
     { date: "Feb 15", event: "Agentic v2.1 beta launch" },
-    { date: "Mar 1", event: "Channel Markets prototype complete" },
-    { date: "Mar 15", event: "Multi-channel Apps discovery" },
     { date: "Jun 1", event: "Alison returns from mat leave" }
   ],
 
