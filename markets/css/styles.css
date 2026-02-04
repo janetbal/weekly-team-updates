@@ -1,0 +1,789 @@
+/**
+ * Markets Weekly Team Updates - Styles
+ * Modern slate/emerald color palette with Plus Jakarta Sans
+ */
+
+/* ============================================
+   CSS Variables - Color Palette
+   ============================================ */
+:root {
+  /* Slate palette - sophisticated grays */
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+
+  /* Emerald palette - softer greens */
+  --emerald-400: #34d399;
+  --emerald-500: #10b981;
+  --emerald-600: #059669;
+  --emerald-700: #047857;
+  --emerald-800: #065f46;
+
+  /* Semantic colors */
+  --text-primary: var(--slate-800);
+  --text-secondary: var(--slate-500);
+  --text-muted: var(--slate-400);
+  --bg-page: var(--slate-50);
+  --bg-card: #ffffff;
+  --border-light: var(--slate-200);
+  --accent: var(--emerald-600);
+  --accent-hover: var(--emerald-700);
+}
+
+/* ============================================
+   Global Typography
+   ============================================ */
+body,
+html,
+* {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+}
+
+body {
+  background: var(--bg-page);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   Layout - Dashboard with Sidebar
+   ============================================ */
+.header-content {
+  max-width: calc(180px + 880px + 2rem);
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+}
+
+.dashboard-layout {
+  display: flex;
+  max-width: calc(180px + 880px + 2rem);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  gap: 1.5rem;
+}
+
+.footer-content {
+  max-width: calc(180px + 880px + 2rem);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Week Navigation Sidebar */
+.week-nav {
+  width: 180px;
+  flex-shrink: 0;
+  padding-top: 1.5rem;
+  position: sticky;
+  top: 80px;
+  height: fit-content;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+
+.week-nav-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding: 0 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.week-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.week-item {
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.week-item:hover {
+  background: var(--slate-100);
+  color: var(--text-primary);
+}
+
+.week-item.active {
+  background: var(--emerald-600);
+  color: white;
+}
+
+.week-item.active:hover {
+  background: var(--emerald-700);
+  color: white;
+}
+
+/* Main Content Area */
+.main-content {
+  flex: 1;
+  min-width: 0;
+  padding: 1.5rem 0;
+}
+
+/* ============================================
+   Loading Spinner
+   ============================================ */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--slate-200);
+  border-top-color: var(--emerald-500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Toast Notifications
+   ============================================ */
+.toast-notification {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  z-index: 50;
+  animation: toast-slide-in 0.3s ease-out;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toast-success {
+  background: #059669;
+  color: white;
+}
+
+.toast-error {
+  background: #dc2626;
+  color: white;
+}
+
+.toast-info {
+  background: var(--slate-700);
+  color: white;
+}
+
+.toast-fade-out {
+  animation: toast-fade-out 0.3s ease-out forwards;
+}
+
+@keyframes toast-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   Migration Metrics Card
+   ============================================ */
+.migration-metrics-card {
+  background: linear-gradient(135deg, var(--slate-700) 0%, var(--slate-600) 100%);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: white;
+}
+
+.metrics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.metrics-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: white;
+}
+
+.metrics-date {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metric-label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+
+.metric-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.metric-change {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.metric-change.positive {
+  color: var(--emerald-400);
+}
+
+.metric-change.negative {
+  color: #fca5a5;
+}
+
+/* ============================================
+   Update Sections
+   ============================================ */
+.update-section {
+  background: var(--bg-card);
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  padding: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+
+.section-header .section-title {
+  margin-bottom: 0;
+}
+
+/* ============================================
+   AI Badge
+   ============================================ */
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+}
+
+/* ============================================
+   Urgent Items
+   ============================================ */
+.urgent-section {
+  border-color: #fbbf24;
+  border-width: 2px;
+}
+
+.urgent-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.urgent-item {
+  padding: 16px;
+  background: #fffbeb;
+  border-radius: 8px;
+  border-left: 4px solid #f59e0b;
+}
+
+.urgent-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.urgent-item-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #f59e0b;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.urgent-item-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-left: 12px;
+  flex: 1;
+}
+
+.urgent-item-body {
+  margin-left: 36px;
+}
+
+.urgent-item-reason {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.urgent-item-action {
+  font-size: 0.875rem;
+  color: var(--emerald-600);
+  font-weight: 500;
+}
+
+.urgent-item-action strong {
+  color: var(--emerald-800);
+}
+
+.urgent-item-placeholder {
+  padding: 24px;
+  text-align: center;
+}
+
+/* ============================================
+   Projects Table
+   ============================================ */
+.projects-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.projects-table th {
+  text-align: left;
+  padding: 12px 8px;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--border-light);
+}
+
+.projects-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--slate-100);
+  color: var(--text-secondary);
+}
+
+.projects-table tbody tr:hover {
+  background: var(--slate-50);
+}
+
+/* Stacked Projects Table (2 rows per project) */
+.projects-table-stacked .project-row-main td {
+  border-bottom: none;
+  padding-bottom: 6px;
+}
+
+.projects-table-stacked .project-row-main td:first-child {
+  font-weight: 600;
+}
+
+.projects-table-stacked .project-row-summary td {
+  padding-top: 0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--slate-100);
+}
+
+.projects-table-stacked .project-row-main:hover,
+.projects-table-stacked .project-row-main:hover + .project-row-summary {
+  background: var(--slate-50);
+}
+
+.projects-table-stacked .project-row-summary:hover {
+  background: var(--slate-50);
+}
+
+/* 14-Day Summary Cell (full width) */
+.projects-table .summary-cell {
+  line-height: 1.7;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.projects-table .summary-cell br {
+  display: block;
+  content: "";
+  margin-top: 6px;
+}
+
+/* State Badges */
+.state-badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+}
+
+.state-badge.discovery {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.state-badge.prototype {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.state-badge.build {
+  background: #d1fae5;
+  color: var(--emerald-800);
+}
+
+.state-badge.release {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.state-badge.complete {
+  background: var(--slate-100);
+  color: var(--slate-500);
+}
+
+/* Risk Indicators */
+.risk-badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+}
+
+.risk-badge.low {
+  background: #d1fae5;
+  color: var(--emerald-800);
+}
+
+.risk-badge.medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.risk-badge.high {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.risk-badge.none {
+  background: var(--slate-100);
+  color: var(--slate-500);
+}
+
+/* ============================================
+   Date Health Indicators
+   ============================================ */
+.date-health {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+}
+
+.date-health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.date-health-dot.on-track {
+  background: var(--emerald-500);
+}
+
+.date-health-dot.at-risk {
+  background: #f59e0b;
+}
+
+.date-health-dot.off-track {
+  background: #ef4444;
+}
+
+.date-health-text {
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   Dependent Projects Section
+   ============================================ */
+.dependent-section {
+  border-color: var(--slate-300);
+}
+
+.dependency-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--slate-100);
+  color: var(--slate-600);
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+}
+
+.dependent-projects-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.dependent-projects-table th {
+  text-align: left;
+  padding: 12px 8px;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--border-light);
+}
+
+.dependent-projects-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--slate-100);
+  color: var(--text-secondary);
+}
+
+.dependent-projects-table tbody tr:hover {
+  background: var(--slate-50);
+}
+
+.dependent-projects-table td:first-child {
+  font-weight: 600;
+}
+
+.dependent-projects-table .impact-text {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  max-width: 250px;
+}
+
+.dependent-projects-table .status-cell {
+  max-width: 180px;
+}
+
+/* Status indicators for dependent projects */
+.dependent-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dependent-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dependent-status-dot.blocked {
+  background: #ef4444;
+}
+
+.dependent-status-dot.at-risk {
+  background: #f59e0b;
+}
+
+.dependent-status-dot.on-track {
+  background: var(--emerald-500);
+}
+
+/* ============================================
+   Key Dates
+   ============================================ */
+.key-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.key-date-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 12px;
+  background: var(--slate-50);
+  border-radius: 8px;
+}
+
+.key-date-date {
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.key-date-event {
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 900px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+
+  .week-nav {
+    width: 100%;
+    position: static;
+    padding-top: 1rem;
+    max-height: none;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .week-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .week-item {
+    padding: 0.5rem 0.75rem;
+  }
+
+  #generate-btn {
+    display: none !important;
+  }
+
+  #generate-hint {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+
+  .projects-table {
+    font-size: 0.75rem;
+  }
+
+  .projects-table th,
+  .projects-table td {
+    padding: 8px 4px;
+  }
+
+  .header-content,
+  .dashboard-layout,
+  .footer-content {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+  body {
+    background: white;
+  }
+
+  header,
+  footer,
+  .week-nav,
+  #export-pdf-btn,
+  #refresh-btn,
+  #generate-btn,
+  #generate-hint {
+    display: none !important;
+  }
+
+  .dashboard-layout {
+    display: block;
+  }
+
+  .main-content {
+    padding: 0;
+  }
+
+  .update-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .migration-metrics-card {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .toast-notification {
+    display: none !important;
+  }
+}
+
+/* ============================================
+   Utility: Animate spin (for loading button)
+   ============================================ */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

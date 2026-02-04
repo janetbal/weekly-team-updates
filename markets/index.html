@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markets Weekly Team Updates</title>
+
+  <!-- Plus Jakarta Sans Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Quick Client API -->
+  <script src="/client/quick.js"></script>
+
+  <!-- Tailwind CSS v4 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/styles.css?v=13">
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-90 z-40 flex items-center justify-center">
+    <div class="text-center">
+      <div class="loading-spinner mb-4"></div>
+      <p class="text-slate-600" id="loading-text">Loading weekly updates...</p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div id="main-content" class="hidden">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div class="header-content">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-3 mb-1">
+              <h1 class="text-xl font-semibold text-slate-800">Markets Weekly Team Updates</h1>
+              <a href="https://merch-roadmap.quick.shopify.io" target="_blank" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1">
+                View Roadmap
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+              </a>
+            </div>
+            <div class="flex items-center gap-3">
+              <p class="text-sm text-slate-500" id="current-week-label">Week of --</p>
+              <span class="text-slate-300">|</span>
+              <p class="text-xs text-slate-400" id="generated-info">Not yet generated</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <!-- Generate Button (visible Mon/Tue only) -->
+            <button id="generate-btn" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 hidden">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+              Generate This Week's Report
+            </button>
+            <!-- Hint when generation not available -->
+            <span id="generate-hint" class="text-xs text-slate-400 hidden">Generation available Monday-Tuesday</span>
+
+            <button id="export-pdf-btn" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Export PDF
+            </button>
+            <button id="refresh-btn" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Dashboard Layout with Sidebar -->
+    <div class="dashboard-layout">
+      <!-- Left Navigation Sidebar -->
+      <aside class="week-nav">
+        <h3 class="week-nav-title">Updates</h3>
+        <ul class="week-list" id="week-list">
+          <!-- Week items populated by JS -->
+        </ul>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="main-content">
+      <!-- Migration Metrics Card (Always Visible) -->
+      <section class="migration-metrics-card mb-6">
+        <div class="metrics-header">
+          <h2>Markets API and Markets Home Migration</h2>
+          <span class="metrics-date" id="metrics-date">Week of --</span>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <span class="metric-label">GMV Migrated</span>
+            <span class="metric-value" id="metric-gmv-pct">--%</span>
+            <span class="metric-change positive" id="metric-gmv-change">-- WoW</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Shops Remaining</span>
+            <span class="metric-value" id="metric-shops-remaining">--</span>
+            <span class="metric-change positive" id="metric-shops-change">-- WoW</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Safe Apps</span>
+            <span class="metric-value" id="metric-safe-apps">--%</span>
+            <span class="metric-change" id="metric-apps-change">-- WoW</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Top 3 Urgent Items -->
+      <section class="update-section urgent-section mb-6">
+        <div class="section-header">
+          <h2 class="section-title">Top 3 Urgent Items</h2>
+          <span class="ai-badge">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 5a1 1 0 112 0v4a1 1 0 11-2 0V5zm0 8a1 1 0 112 0 1 1 0 01-2 0z"/>
+            </svg>
+            AI Generated
+          </span>
+        </div>
+        <div class="urgent-items" id="urgent-items">
+          <div class="urgent-item-placeholder">
+            <p class="text-slate-400">Analyzing data...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Markets Team Projects Status -->
+      <section class="update-section mb-6">
+        <h2 class="section-title">Markets Team Projects</h2>
+        <div class="overflow-x-auto">
+          <table class="projects-table projects-table-stacked" id="projects-table">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>State</th>
+                <th>Champion</th>
+                <th>Target Date</th>
+                <th>Risk</th>
+              </tr>
+            </thead>
+            <tbody id="projects-table-body">
+              <tr><td colspan="5" class="text-center text-slate-400 py-4">Loading projects...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Projects That Depend On Us -->
+      <section class="update-section dependent-section mb-6">
+        <div class="section-header">
+          <h2 class="section-title">Projects That Depend On Us</h2>
+          <span class="dependency-badge">External Teams</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="dependent-projects-table" id="dependent-projects-table">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Team</th>
+                <th>Lead</th>
+                <th>Status</th>
+                <th>Markets Impact</th>
+                <th>Target Date</th>
+              </tr>
+            </thead>
+            <tbody id="dependent-projects-body">
+              <tr><td colspan="6" class="text-center text-slate-400 py-4">Loading dependent projects...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Key Dates -->
+      <section class="update-section mb-6">
+        <h2 class="section-title">Key Dates (Next 2 Weeks)</h2>
+        <div class="key-dates" id="key-dates">
+          <p class="text-slate-400">Loading dates...</p>
+        </div>
+      </section>
+      </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+      <div class="footer-content text-center text-sm text-slate-500">
+        <p>Markets Weekly Updates | Self-serve generation via Quick | Questions? #markets-migration</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
